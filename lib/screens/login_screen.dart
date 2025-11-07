@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'signup_screen.dart';
+import 'inventory_home_page.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -40,7 +41,14 @@ class _LoginScreenState extends State<LoginScreen> {
         _emailController.text.trim(),
         _passwordController.text,
       );
-      // Navigation handled by StreamBuilder in main.dart
+
+      if (mounted) {
+        // Navigate directly to home page
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => InventoryHomePage()),
+          (route) => false,
+        );
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
