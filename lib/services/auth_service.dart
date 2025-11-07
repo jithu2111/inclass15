@@ -22,6 +22,23 @@ class AuthService {
         email: email.trim(),
         password: password,
       );
+
+      // Check if user profile exists in Firestore, create if missing
+      final user = credential.user;
+      if (user != null) {
+        final profileExists = await _userService.userProfileExists(user.uid);
+        if (!profileExists) {
+          // Create profile for users without one (e.g., admin created in console)
+          final role = email.trim() == adminEmail ? UserRole.admin : UserRole.viewer;
+          await _userService.createUserProfile(
+            userId: user.uid,
+            email: email.trim(),
+            displayName: user.displayName ?? 'Admin',
+            role: role,
+          );
+        }
+      }
+
       return credential;
     } on FirebaseAuthException catch (e) {
       if (e.code == 'user-not-found') {
@@ -55,6 +72,9 @@ class AuthService {
 
       // Update display name
       await credential.user?.updateDisplayName(displayName);
+
+      // Reload user to get updated display name
+      await credential.user?.reload();
 
       // Determine role: admin if email matches, otherwise viewer
       final role = email.trim() == adminEmail ? UserRole.admin : UserRole.viewer;
@@ -107,13 +127,23 @@ class AuthService {
     final user = currentUser;
     if (user == null) return 'Guest';
 
-    // Try to get from Firebase Auth first
-    if (user.displayName != null && user.displayName!.isNotEmpty) {
-      return user.displayName!;
+    // Get from Firestore first (source of truth)
+    final firestoreName = await _userService.getDisplayName(user.uid);
+
+    // If Firestore has a proper name, use it
+    if (firestoreName != 'User') {
+      return firestoreName;
     }
 
-    // Otherwise get from Firestore
-    return await _userService.getDisplayName(user.uid);
+    // Fallback to Firebase Auth
+    await user.reload();
+    final refreshedUser = _auth.currentUser;
+    if (refreshedUser?.displayName != null && refreshedUser!.displayName!.isNotEmpty) {
+      return refreshedUser.displayName!;
+    }
+
+    // Last resort
+    return 'User';
   }
 
   // Check if current user is admin
