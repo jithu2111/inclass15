@@ -4,6 +4,7 @@ import '../models/user_role.dart';
 import '../services/firestore_service.dart';
 import '../services/auth_service.dart';
 import 'add_edit_item_screen.dart';
+import 'login_screen.dart';
 
 class InventoryHomePage extends StatefulWidget {
   InventoryHomePage({super.key});
@@ -37,7 +38,13 @@ class _InventoryHomePageState extends State<InventoryHomePage> {
 
   Future<void> _handleLogout() async {
     await _authService.signOut();
-    // Navigation handled by StreamBuilder in main.dart
+    if (mounted) {
+      // Navigate directly to login screen
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+        (route) => false,
+      );
+    }
   }
 
   @override
