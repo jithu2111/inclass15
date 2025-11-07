@@ -69,7 +69,7 @@ class _InventoryHomePageState extends State<InventoryHomePage> {
         ],
       ),
       body: StreamBuilder<List<Item>>(
-        stream: firestoreService.getItemsStream(),
+        stream: _firestoreService.getItemsStream(),
         builder: (context, snapshot) {
           // Handle loading state
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -185,14 +185,16 @@ class _InventoryHomePageState extends State<InventoryHomePage> {
                       const Icon(Icons.chevron_right),
                     ],
                   ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => AddEditItemScreen(item: item),
-                      ),
-                    );
-                  },
+                  onTap: _userRole?.canEdit == true
+                      ? () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => AddEditItemScreen(item: item),
+                            ),
+                          );
+                        }
+                      : null,
                   isThreeLine: true,
                 ),
               );
@@ -200,18 +202,20 @@ class _InventoryHomePageState extends State<InventoryHomePage> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const AddEditItemScreen(),
-            ),
-          );
-        },
-        tooltip: 'Add Item',
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: _userRole?.canCreate == true
+          ? FloatingActionButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AddEditItemScreen(),
+                  ),
+                );
+              },
+              tooltip: 'Add Item',
+              child: const Icon(Icons.add),
+            )
+          : null,
     );
   }
 }
