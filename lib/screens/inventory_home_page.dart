@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/item.dart';
 import '../services/firestore_service.dart';
+import 'add_edit_item_screen.dart';
 
 class InventoryHomePage extends StatelessWidget {
   InventoryHomePage({super.key});
@@ -131,17 +132,10 @@ class InventoryHomePage extends StatelessWidget {
                     ],
                   ),
                   onTap: () {
-                    // TODO: Navigate to AddEditItemScreen with item
-                    // Navigator.push(
-                    //   context,
-                    //   MaterialPageRoute(
-                    //     builder: (context) => AddEditItemScreen(item: item),
-                    //   ),
-                    // );
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Edit screen coming soon!'),
-                        duration: Duration(seconds: 1),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AddEditItemScreen(item: item),
                       ),
                     );
                   },
@@ -154,17 +148,10 @@ class InventoryHomePage extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // TODO: Navigate to AddEditItemScreen
-          // Navigator.push(
-          //   context,
-          //   MaterialPageRoute(
-          //     builder: (context) => AddEditItemScreen(),
-          //   ),
-          // );
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Add item screen coming soon!'),
-              duration: Duration(seconds: 1),
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const AddEditItemScreen(),
             ),
           );
         },
