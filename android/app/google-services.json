@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "477260038881",
+    "project_id": "inventory-app-prajeeth",
+    "storage_bucket": "inventory-app-prajeeth.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:477260038881:android:5880e17998b639da552da0",
+        "android_client_info": {
+          "package_name": "com.example.inclass15"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCxtqyhvps9iR2phpOAbP3CEf3YQOQ9gfs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
