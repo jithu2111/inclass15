@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/item.dart';
+import '../models/user_role.dart';
 import '../services/firestore_service.dart';
+import '../services/auth_service.dart';
 
 class AddEditItemScreen extends StatefulWidget {
   final Item? item; // Optional item parameter for editing
@@ -14,6 +16,7 @@ class AddEditItemScreen extends StatefulWidget {
 class _AddEditItemScreenState extends State<AddEditItemScreen> {
   final _formKey = GlobalKey<FormState>();
   final FirestoreService _firestoreService = FirestoreService();
+  final AuthService _authService = AuthService();
 
   // Text editing controllers
   late TextEditingController _nameController;
@@ -22,10 +25,12 @@ class _AddEditItemScreenState extends State<AddEditItemScreen> {
   late TextEditingController _categoryController;
 
   bool _isLoading = false;
+  UserRole? _userRole;
 
   @override
   void initState() {
     super.initState();
+    _checkPermissions();
     // Initialize controllers with existing data if editing
     _nameController = TextEditingController(text: widget.item?.name ?? '');
     _quantityController =
@@ -34,6 +39,34 @@ class _AddEditItemScreenState extends State<AddEditItemScreen> {
         TextEditingController(text: widget.item?.price.toString() ?? '');
     _categoryController =
         TextEditingController(text: widget.item?.category ?? '');
+  }
+
+  Future<void> _checkPermissions() async {
+    final role = await _authService.getUserRole();
+    if (mounted) {
+      setState(() {
+        _userRole = role;
+      });
+
+      // If viewer tries to access this screen, show error and go back
+      if (!role.canCreate && widget.item == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('You do not have permission to add items'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        Navigator.pop(context);
+      } else if (!role.canEdit && widget.item != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('You do not have permission to edit items'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        Navigator.pop(context);
+      }
+    }
   }
 
   @override
