@@ -21,6 +21,8 @@ class _InventoryHomePageState extends State<InventoryHomePage> {
   UserRole? _userRole;
   String? _displayName;
   String _searchQuery = '';
+  String _selectedCategory = 'All';
+  String _selectedStockStatus = 'All';
 
   @override
   void initState() {
@@ -54,6 +56,30 @@ class _InventoryHomePageState extends State<InventoryHomePage> {
         (route) => false,
       );
     }
+  }
+
+  // Get stock status for an item
+  String _getStockStatus(Item item) {
+    if (item.quantity == 0) return 'Out of Stock';
+    if (item.quantity <= 10) return 'Low Stock';
+    return 'In Stock';
+  }
+
+  // Get unique categories from items
+  List<String> _getCategories(List<Item> items) {
+    final categories = items.map((item) => item.category).toSet().toList();
+    categories.sort();
+    return ['All', ...categories];
+  }
+
+  // Clear all filters
+  void _clearFilters() {
+    setState(() {
+      _searchController.clear();
+      _searchQuery = '';
+      _selectedCategory = 'All';
+      _selectedStockStatus = 'All';
+    });
   }
 
   @override
@@ -116,6 +142,133 @@ class _InventoryHomePageState extends State<InventoryHomePage> {
                 });
               },
             ),
+          ),
+
+          // Filters Section
+          StreamBuilder<List<Item>>(
+            stream: _firestoreService.getItemsStream(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return const SizedBox.shrink();
+              }
+
+              final allItems = snapshot.data!;
+              final categories = _getCategories(allItems);
+
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Filters Row
+                    Row(
+                      children: [
+                        // Category Dropdown
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            value: _selectedCategory,
+                            decoration: InputDecoration(
+                              labelText: 'Category',
+                              prefixIcon: const Icon(Icons.category),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                            ),
+                            items: categories.map((category) {
+                              return DropdownMenuItem(
+                                value: category,
+                                child: Text(category),
+                              );
+                            }).toList(),
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedCategory = value!;
+                              });
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        // Clear Filters Button
+                        if (_selectedCategory != 'All' ||
+                            _selectedStockStatus != 'All' ||
+                            _searchQuery.isNotEmpty)
+                          IconButton(
+                            icon: const Icon(Icons.filter_alt_off),
+                            onPressed: _clearFilters,
+                            tooltip: 'Clear Filters',
+                            color: Colors.red,
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Stock Status Chips
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          const Text(
+                            'Stock: ',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          ChoiceChip(
+                            label: const Text('All'),
+                            selected: _selectedStockStatus == 'All',
+                            onSelected: (selected) {
+                              setState(() {
+                                _selectedStockStatus = 'All';
+                              });
+                            },
+                          ),
+                          const SizedBox(width: 8),
+                          ChoiceChip(
+                            label: const Text('In Stock'),
+                            selected: _selectedStockStatus == 'In Stock',
+                            onSelected: (selected) {
+                              setState(() {
+                                _selectedStockStatus = 'In Stock';
+                              });
+                            },
+                            selectedColor: Colors.green[100],
+                          ),
+                          const SizedBox(width: 8),
+                          ChoiceChip(
+                            label: const Text('Low Stock'),
+                            selected: _selectedStockStatus == 'Low Stock',
+                            onSelected: (selected) {
+                              setState(() {
+                                _selectedStockStatus = 'Low Stock';
+                              });
+                            },
+                            selectedColor: Colors.orange[100],
+                          ),
+                          const SizedBox(width: 8),
+                          ChoiceChip(
+                            label: const Text('Out of Stock'),
+                            selected: _selectedStockStatus == 'Out of Stock',
+                            onSelected: (selected) {
+                              setState(() {
+                                _selectedStockStatus = 'Out of Stock';
+                              });
+                            },
+                            selectedColor: Colors.red[100],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                ),
+              );
+            },
           ),
 
           // Item List
@@ -184,12 +337,24 @@ class _InventoryHomePageState extends State<InventoryHomePage> {
                   );
                 }
 
-                // Filter items based on search query
+                // Filter items based on search query, category, and stock status
                 final allItems = snapshot.data!;
                 final filteredItems = allItems.where((item) {
-                  if (_searchQuery.isEmpty) return true;
-                  return item.name.toLowerCase().contains(_searchQuery) ||
+                  // Search filter
+                  final matchesSearch = _searchQuery.isEmpty ||
+                      item.name.toLowerCase().contains(_searchQuery) ||
                       item.category.toLowerCase().contains(_searchQuery);
+
+                  // Category filter
+                  final matchesCategory = _selectedCategory == 'All' ||
+                      item.category == _selectedCategory;
+
+                  // Stock status filter
+                  final itemStockStatus = _getStockStatus(item);
+                  final matchesStockStatus = _selectedStockStatus == 'All' ||
+                      itemStockStatus == _selectedStockStatus;
+
+                  return matchesSearch && matchesCategory && matchesStockStatus;
                 }).toList();
 
                 // Show "no results" if filtered list is empty
